@@ -28,27 +28,34 @@ jobs:
 
       - name: Run tests (if any)
         run: |
-          # You can add testing commands here (e.g., pytest)
-          echo "Running tests (if any)..."
+          # Add your test commands here, e.g., pytest
+          echo "Running tests..."
 
   # Deployment job for `main` branch only
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' # Only run on `main` branch
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Prepare SSH key
+        env:
+          PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
+        run: |
+          echo "$PRIVATE_KEY" > deploy_key.pem
+          chmod 600 deploy_key.pem
+
       - name: Deploy to server
         env:
           HOST: ${{ secrets.SERVER_HOST }}
           USER: ${{ secrets.SERVER_USER }}
-          PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
         run: |
-          echo "Deploying to server..."
-          scp -i $PRIVATE_KEY weather.py $USER@$HOST:/home/Result/
-          # Restart the weather app if necessary
-          ssh -i $PRIVATE_KEY $USER@$HOST 'systemctl restart weather-app'
+          echo "Deploying to $USER@$HOST:/home/Result/"
+          # Copy the binary to /home/Result/
+          scp -o StrictHostKeyChecking=no -i deploy_key.pem weather.py $USER@$HOST:/home/Result/
+          # Restart the weather-app service on the server
+          ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
 
