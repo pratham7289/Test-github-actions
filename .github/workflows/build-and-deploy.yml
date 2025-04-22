@@ -48,7 +48,7 @@ jobs:
           PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
         run: |
           echo "Deploying to server..."
-          scp -i $PRIVATE_KEY weather.py $USER@$HOST:/path/to/deployment/folder/
-          # Restart the weather app if necessary (you can add commands to restart the app here)
+          scp -i $PRIVATE_KEY weather.py $USER@$HOST:/home/Result/
+          # Restart the weather app if necessary
           ssh -i $PRIVATE_KEY $USER@$HOST 'systemctl restart weather-app'
 
