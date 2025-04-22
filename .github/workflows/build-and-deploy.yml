@@ -54,7 +54,7 @@ jobs:
           USER: ${{ secrets.SERVER_USER }}
         run: |
           echo "Deploying to $USER@$HOST:/home/Result/"
-          # Copy the binary to /home/Result/
+          # Copy the binary to /home/Result/  now
           scp -o StrictHostKeyChecking=no -i deploy_key.pem weather.py $USER@$HOST:/home/Result/
           # Restart the weather-app service on the server
           ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
