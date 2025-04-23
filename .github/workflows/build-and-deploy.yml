@@ -61,22 +61,6 @@ jobs:
     needs: build  # Depends on the build job completing successfully
     runs-on: self-hosted  # Same RHEL runner
     steps:
-      # Step 1: Diagnostic information
-      - name: Diagnostic information
-        run: |
-          whoami
-          groups
-          id
-          ls -ld /home
-          ls -ld /home/github-runner
-          ls -ld /home/github-runner/builds || echo "Directory does not exist"
-          ls -ld /home/Result
-          ls -ld /home/Result/builds || echo "Directory does not exist"
-          getfacl /home/github-runner || echo "getfacl not available"
-          getfacl /home/github-runner/builds || echo "getfacl not available or directory does not exist"
-          getfacl /home/Result || echo "getfacl not available"
-          getfacl /home/Result/builds || echo "getfacl not available or directory does not exist"
-
       # Step 2: Download the binary artifact from the build job
       - name: Download build artifact
         uses: actions/download-artifact@v4
@@ -84,12 +68,12 @@ jobs:
           name: ${{ needs.build.outputs.binary_name }}
           path: dist/
 
-      # Step 3: Deploy the binary to a runner-accessible folder
+      # Step 3: Deploy the binary to the specified folder
       - name: Deploy binary
         run: |
-          echo "Deploying binary to /home/github-runner/builds/"
-          mkdir -p /home/github-runner/builds/  # Create the folder if it doesn’t exist
-          cp dist/${{ needs.build.outputs.binary_name }} /home/github-runner/builds/${{ needs.build.outputs.binary_name }}
-          chmod +x /home/github-runner/builds/${{ needs.build.outputs.binary_name }}
+          echo "Deploying binary to /home/Result/builds/"
+          sudo mkdir -p /home/Result/builds/
+          sudo cp dist/${{ needs.build.outputs.binary_name }} /home/Result/builds/${{ needs.build.outputs.binary_name }}
+          sudo chmod +x /home/Result/builds/${{ needs.build.outputs.binary_name }}
           echo "Restarting weather-app service..."
           sudo systemctl restart weather-app
