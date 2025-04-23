@@ -3,18 +3,18 @@ name: Build and Deploy Weather App
 on:
   push:
     branches:
-      - main  # Trigger only on push to `main` branch
+      - main  # Only run on push to main
 
 jobs:
   build:
-    runs-on: self-hosted  # Use the self-hosted runner for building
+    runs-on: self-hosted
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.x
 
@@ -22,7 +22,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller  # Ensure pyinstaller is installed
+          pip install pyinstaller
 
       - name: Build binary
         run: |
@@ -31,21 +31,21 @@ jobs:
           echo "Binary created at dist/weather"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
-          name: weather-build  # Name for the build artifact
-          path: dist/weather  # Path to the built binary
+          name: weather-build
+          path: dist/weather
 
   deploy:
     needs: build
-    runs-on: self-hosted  # Use the same self-hosted runner for deployment
+    runs-on: self-hosted
 
     steps:
       - name: Download build artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
-          name: weather-build  # Name of the artifact to download
-          path: dist/  # Path to download the artifact to
+          name: weather-build
+          path: dist/
 
       - name: Prepare SSH key
         env:
@@ -61,5 +61,5 @@ jobs:
         run: |
           echo "Deploying to $USER@$HOST:/home/Result/"
           scp -o StrictHostKeyChecking=no -i deploy_key.pem dist/weather $USER@$HOST:/home/Result/
-          ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'  # Restart the service
+          ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
 
