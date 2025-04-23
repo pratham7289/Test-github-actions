@@ -61,7 +61,7 @@ jobs:
     needs: build  # Depends on the build job completing successfully
     runs-on: self-hosted  # Same RHEL runner
     steps:
-      # Step 1: Download the binary artifact from the build job
+      # Step 1: Download the binary artifact from the build job. this is just the comment part
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
