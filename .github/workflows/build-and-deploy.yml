@@ -1,6 +1,5 @@
 name: Build and Deploy Weather App
 
-# Trigger the workflow when code is pushed to `dev` or `main` branches
 on:
   push:
     branches:
@@ -8,9 +7,8 @@ on:
       - main
 
 jobs:
-  # Build job for both dev and main branches
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # Uses your RHEL self-hosted runner
 
     steps:
       - name: Checkout repository
@@ -26,20 +24,42 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run tests (if any)
+      - name: Build binary
         run: |
-          # Add your test commands here, e.g., pytest
-          echo "Running tests..."
+          echo "Creating binary..."
+          pyinstaller --onefile weather.py
+          echo "Binary created at dist/weather"
 
-  # Deployment job for `main` branch only
+      - name: Upload dev build artifact
+        if: github.ref == 'refs/heads/dev'
+        uses: actions/upload-artifact@v2
+        with:
+          name: weather-dev-build
+          path: dist/weather
+
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.x
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+
+      - name: Build binary
+        run: |
+          pyinstaller --onefile weather.py
+          echo "Binary created at dist/weather"
 
       - name: Prepare SSH key
         env:
@@ -54,8 +74,6 @@ jobs:
           USER: ${{ secrets.SERVER_USER }}
         run: |
           echo "Deploying to $USER@$HOST:/home/Result/"
-          # Copy the binary to /home/Result/  now
-          scp -o StrictHostKeyChecking=no -i deploy_key.pem weather.py $USER@$HOST:/home/Result/
-          # Restart the weather-app service on the server
+          scp -o StrictHostKeyChecking=no -i deploy_key.pem dist/weather $USER@$HOST:/home/Result/
           ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
 
