@@ -41,9 +41,8 @@ jobs:
       - name: Build binary and set outputs
         id: set_output
         run: |
-          source venv/bin/activate
           set -euxo pipefail  # Enable strict error handling
-          python3 -m pyinstaller --onefile weather.py  # Build the binary
+          ./venv/bin/python3 -m pyinstaller --onefile weather.py  # Use the virtual env's Python directly
           echo "Binary created at dist/weather"
 
           # Rename the binary with build number
