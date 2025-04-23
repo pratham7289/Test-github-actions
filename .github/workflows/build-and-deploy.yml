@@ -7,9 +7,8 @@ on:
       - main
 
 jobs:
-  build:=
-    runs-on: self-hosted  # Uses your RHEL self-hosted runner . it is being used now
-
+  build:
+    runs-on: self-hosted  # Uses your RHEL self-hosted runner . it is being used now what to do
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
