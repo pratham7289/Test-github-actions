@@ -6,60 +6,30 @@ on:
       - main
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: self-hosted
+    env:
+      DEPLOY_DIR: /home/Result
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
         with:
-          python-version: 3.x
+          java-version: '17'
 
-      - name: Install dependencies
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Ensure deployment directory exists
+        run: mkdir -p $DEPLOY_DIR
+
+      - name: Deploy artifact locally
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
+          cp target/weather-app.jar $DEPLOY_DIR/weather-app-${{ github.run_number }}.jar
 
-      - name: Build binary
-        run: |
-          echo "Creating binary..."
-          pyinstaller --onefile weather.py
-          echo "Binary created at dist/weather"
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: weather-build
-          path: dist/weather
-
-  deploy:
-    needs: build
-    runs-on: self-hosted
-
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: weather-build
-          path: dist/
-
-      - name: Prepare SSH key
-        env:
-          PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
-        run: |
-          echo "$PRIVATE_KEY" > deploy_key.pem
-          chmod 600 deploy_key.pem
-
-      - name: Deploy to server
-        env:
-          HOST: ${{ secrets.SERVER_HOST }}
-          USER: ${{ secrets.SERVER_USER }}
-        run: |
-          echo "Deploying to $USER@$HOST:/home/Result/"
-          scp -o StrictHostKeyChecking=no -i deploy_key.pem dist/weather $USER@$HOST:/home/Result/
-          ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
+      - name: Notify
+        run: echo "Deployed weather-app-${{ github.run_number }}.jar to $DEPLOY_DIR"
 
