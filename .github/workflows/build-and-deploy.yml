@@ -3,20 +3,20 @@ name: Build and Deploy Weather App
 on:
   push:
     branches:
-      - main  # Only run on push to main
+      - main  # Only trigger on main branch
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: self-hosted  # Your RHEL self-hosted runner
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.x
+          python-version: '3.9'  # Use a specific valid Python version
 
       - name: Install dependencies
         run: |
@@ -31,14 +31,14 @@ jobs:
           echo "Binary created at dist/weather"
 
       - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4  # Use v4 (v2 is deprecated)
         with:
           name: weather-build
           path: dist/weather
 
   deploy:
     needs: build
-    runs-on: self-hosted
+    runs-on: self-hosted  # Same runner used
 
     steps:
       - name: Download build artifact
@@ -47,19 +47,11 @@ jobs:
           name: weather-build
           path: dist/
 
-      - name: Prepare SSH key
-        env:
-          PRIVATE_KEY: ${{ secrets.SERVER_PRIVATE_KEY }}
+      - name: Deploy binary to local path
         run: |
-          echo "$PRIVATE_KEY" > deploy_key.pem
-          chmod 600 deploy_key.pem
-
-      - name: Deploy to server
-        env:
-          HOST: ${{ secrets.SERVER_HOST }}
-          USER: ${{ secrets.SERVER_USER }}
-        run: |
-          echo "Deploying to $USER@$HOST:/home/Result/"
-          scp -o StrictHostKeyChecking=no -i deploy_key.pem dist/weather $USER@$HOST:/home/Result/
-          ssh -o StrictHostKeyChecking=no -i deploy_key.pem $USER@$HOST 'systemctl restart weather-app'
+          echo "Copying binary to /home/Result/"
+          cp dist/weather /home/Result/weather
+          chmod +x /home/Result/weather
+          echo "Restarting weather-app service..."
+          sudo systemctl restart weather-app
 
