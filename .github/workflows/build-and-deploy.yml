@@ -42,7 +42,7 @@ jobs:
         id: set_output
         run: |
           set -euxo pipefail  # Enable strict error handling
-          ./venv/bin/python3 -m pyinstaller --onefile weather.py  # Use the virtual env's Python directly
+          ./venv/bin/python3 -m PyInstaller --onefile weather.py  # Corrected module name with capital 'P'
           echo "Binary created at dist/weather"
 
           # Rename the binary with build number
