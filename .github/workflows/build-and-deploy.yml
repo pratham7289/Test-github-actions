@@ -6,7 +6,7 @@ on:
     branches:
       - main
 
-# Define environment variables
+# Define environment variable this will assign the build number to the binary file that will be build and stored in the servers
 env:
   BUILD_NUMBER: ${{ github.run_number }}  # Use GitHub run number for versioning
 
